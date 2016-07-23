@@ -76,6 +76,7 @@ view model =
             []
             [ text "Score Keeper" ]
         , playerForm model
+        , p [] [ text <| toString model ]
         ]
 
 
@@ -94,6 +95,10 @@ playerForm model =
         ]
 
 
-main : Html msg
+main : Program Never
 main =
-    text "Ahoy world!"
+    App.beginnerProgram
+        { model = initModel
+        , view = view
+        , update = update
+        }
