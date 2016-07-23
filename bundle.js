@@ -7258,6 +7258,26 @@ var _elm_lang$html$Html$menu = _elm_lang$html$Html$node('menu');
 var _user$project$Main$main = {
 	main: _elm_lang$html$Html$text('Ahoy world!')
 };
+var _user$project$Main$initModel = {
+	players: _elm_lang$core$Native_List.fromArray(
+		[]),
+	name: '',
+	playerId: _elm_lang$core$Maybe$Nothing,
+	plays: _elm_lang$core$Native_List.fromArray(
+		[])
+};
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {players: a, name: b, playerId: c, plays: d};
+	});
+var _user$project$Main$Player = F3(
+	function (a, b, c) {
+		return {id: a, name: b, points: c};
+	});
+var _user$project$Main$Play = F4(
+	function (a, b, c, d) {
+		return {id: a, playerId: b, name: c, points: d};
+	});
 
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
