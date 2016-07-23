@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.App as App
 import List exposing (maximum, map)
+import Maybe
 
 
 -- model
@@ -48,7 +49,7 @@ initModel =
 
 type Msg
     = Edit Player
-    | Score Player Int
+    | Score Int Int
     | Input String
     | Save
     | Cancel
@@ -62,16 +63,71 @@ update msg model =
             { model | name = name }
 
         Save ->
-            { model
-                | players = addPlayer model
-                , name = ""
-            }
+            case (model.playerId) of
+                Just i ->
+                    { model
+                        | players =
+                            nameUpdater
+                                model.players
+                                i
+                                model.name
+                        , name = ""
+                        , playerId = Nothing
+                    }
+
+                Nothing ->
+                    { model
+                        | players = addPlayer model
+                        , name = ""
+                        , playerId = Nothing
+                    }
 
         Cancel ->
-            { model | name = "" }
+            { model
+                | name = ""
+                , playerId = Nothing
+            }
+
+        Edit player ->
+            { model
+                | name = player.name
+                , playerId = Just player.id
+            }
+
+        Score playerId num ->
+            -- Find the player in the list and update it
+            { model | players = pointUpdater model.players playerId num }
 
         _ ->
             model
+
+
+nameUpdater : List Player -> Int -> String -> List Player
+nameUpdater players playerId name =
+    List.map
+        (\player ->
+            case (player.id == playerId) of
+                True ->
+                    { player | name = name }
+
+                False ->
+                    player
+        )
+        players
+
+
+pointUpdater : List Player -> Int -> Int -> List Player
+pointUpdater players playerId points =
+    List.map
+        (\player ->
+            case (player.id == playerId) of
+                True ->
+                    { player | points = player.points + points }
+
+                False ->
+                    player
+        )
+        players
 
 
 addPlayer : Model -> List Player
@@ -170,7 +226,7 @@ pointButtonMaker : Int -> Player -> Html Msg
 pointButtonMaker i player =
     button
         [ type' "button"
-        , onClick <| Score player i
+        , onClick <| Score player.id i
         ]
         [ text <| toString (i) ++ "pt" ]
 
