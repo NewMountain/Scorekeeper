@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.App as App
+import List exposing (maximum, map)
 
 
 -- model
@@ -60,8 +61,36 @@ update msg model =
         Input name ->
             { model | name = name }
 
+        Save ->
+            { model
+                | players = addPlayer model
+                , name = ""
+            }
+
+        Cancel ->
+            { model | name = "" }
+
         _ ->
             model
+
+
+addPlayer : Model -> List Player
+addPlayer model =
+    let
+        -- Map over the list of players, find the max id and increment by one
+        id =
+            map .id model.players
+                |> maximum
+                |> Maybe.withDefault 0
+                |> (+) 1
+
+        name =
+            model.name
+
+        points =
+            0
+    in
+        model.players ++ [ (Player id name points) ]
 
 
 
