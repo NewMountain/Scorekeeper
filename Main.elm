@@ -104,9 +104,75 @@ view model =
         [ h1
             []
             [ text "Score Keeper" ]
+        , playerSection model
         , playerForm model
         , p [] [ text <| toString model ]
         ]
+
+
+playerSection : Model -> Html Msg
+playerSection model =
+    div
+        []
+        [ playerListHeader
+        , playerListModel model
+        , pointTotal model
+        ]
+
+
+pointTotal : Model -> Html Msg
+pointTotal model =
+    let
+        total =
+            List.map .points model.players
+                |> List.sum
+    in
+        footer []
+            [ div [] [ text "Total: " ]
+            , div [] [ text <| toString total ]
+            ]
+
+
+playerListHeader : Html Msg
+playerListHeader =
+    header
+        []
+        [ div [] [ text "Name" ]
+        , div [] [ text "Points" ]
+        ]
+
+
+playerListModel : Model -> Html Msg
+playerListModel model =
+    ul
+        []
+        (List.map domPlayerMaker model.players)
+
+
+domPlayerMaker : Player -> Html Msg
+domPlayerMaker player =
+    li []
+        [ i
+            [ class "edit"
+            , onClick (Edit player)
+            ]
+            []
+        , div []
+            [ text player.name ]
+        , pointButtonMaker 2 player
+        , pointButtonMaker 3 player
+        , div []
+            [ text <| toString player.points ]
+        ]
+
+
+pointButtonMaker : Int -> Player -> Html Msg
+pointButtonMaker i player =
+    button
+        [ type' "button"
+        , onClick <| Score player i
+        ]
+        [ text <| toString (i) ++ "pt" ]
 
 
 playerForm : Model -> Html Msg
