@@ -20,14 +20,14 @@ type alias Model =
 
 
 type alias Player =
-    { id : Int
+    { playerId : Int
     , name : String
     , points : Int
     }
 
 
 type alias Play =
-    { id : Int
+    { playId : Int
     , playerId : Int
     , name : String
     , points : Int
@@ -73,6 +73,11 @@ update msg model =
                                 model.name
                         , name = ""
                         , playerId = Nothing
+                        , plays =
+                            nameUpdater
+                                model.plays
+                                i
+                                model.name
                     }
 
                 Nothing ->
@@ -91,36 +96,68 @@ update msg model =
         Edit player ->
             { model
                 | name = player.name
-                , playerId = Just player.id
+                , playerId = Just player.playerId
             }
 
         Score playerId num ->
             -- Find the player in the list and update it
-            { model | players = pointUpdater model.players playerId num }
+            { model
+                | players = pointUpdater model.players playerId num
+                , plays = (playMaker model playerId num)
+            }
 
         _ ->
             model
 
 
-nameUpdater : List Player -> Int -> String -> List Player
-nameUpdater players playerId name =
-    List.map
-        (\player ->
-            case (player.id == playerId) of
-                True ->
-                    { player | name = name }
+playMaker : Model -> Int -> Int -> List Play
+playMaker model playerId points =
+    let
+        playId =
+            model.plays
+                |> List.map .playerId
+                |> List.maximum
+                |> Maybe.withDefault 0
+                |> (+) 1
 
-                False ->
-                    player
-        )
-        players
+        playerName =
+            model.players
+                |> List.map
+                    (\player ->
+                        case (player.playerId == playerId) of
+                            True ->
+                                player.name
+
+                            False ->
+                                ""
+                    )
+                |> List.filter (\x -> x /= "")
+                |> Debug.log ""
+                |> List.head
+                |> Maybe.withDefault ""
+    in
+        (Play playId playerId playerName points) :: model.plays
+
+
+nameUpdater : List { c | playerId : Int, name : String } -> Int -> String -> List { c | playerId : Int, name : String }
+nameUpdater ls playerId name =
+    ls
+        |> List.map
+            (\player ->
+                case (player.playerId == playerId) of
+                    True ->
+                        { player | name = name }
+
+                    False ->
+                        player
+            )
 
 
 pointUpdater : List Player -> Int -> Int -> List Player
 pointUpdater players playerId points =
     List.map
         (\player ->
-            case (player.id == playerId) of
+            case (player.playerId == playerId) of
                 True ->
                     { player | points = player.points + points }
 
@@ -135,7 +172,7 @@ addPlayer model =
     let
         -- Map over the list of players, find the max id and increment by one
         id =
-            map .id model.players
+            map .playerId model.players
                 |> maximum
                 |> Maybe.withDefault 0
                 |> (+) 1
@@ -146,7 +183,7 @@ addPlayer model =
         points =
             0
     in
-        model.players ++ [ (Player id name points) ]
+        (Player id name points) :: model.players
 
 
 
@@ -162,7 +199,44 @@ view model =
             [ text "Score Keeper" ]
         , playerSection model
         , playerForm model
+        , playSection model
         , p [] [ text <| toString model ]
+        ]
+
+
+playSection : Model -> Html Msg
+playSection model =
+    div []
+        [ playListHeader
+        , playList model
+        ]
+
+
+playListHeader : Html Msg
+playListHeader =
+    header []
+        [ div [] [ text "Plays" ]
+        , div [] [ text "Points" ]
+        ]
+
+
+playList : Model -> Html Msg
+playList model =
+    model.plays
+        |> List.map play
+        |> ul []
+
+
+play : Play -> Html Msg
+play play =
+    li []
+        [ i
+            [ class "remove"
+            , onClick <| DeletePlay play
+            ]
+            []
+        , div [] [ text play.name ]
+        , div [] [ text <| toString play.points ]
         ]
 
 
@@ -200,9 +274,10 @@ playerListHeader =
 
 playerListModel : Model -> Html Msg
 playerListModel model =
-    ul
-        []
-        (List.map domPlayerMaker model.players)
+    model.players
+        |> List.sortBy .name
+        |> List.map domPlayerMaker
+        |> ul []
 
 
 domPlayerMaker : Player -> Html Msg
@@ -226,7 +301,7 @@ pointButtonMaker : Int -> Player -> Html Msg
 pointButtonMaker i player =
     button
         [ type' "button"
-        , onClick <| Score player.id i
+        , onClick <| Score player.playerId i
         ]
         [ text <| toString (i) ++ "pt" ]
 
