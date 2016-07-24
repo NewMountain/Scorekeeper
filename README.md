@@ -6,7 +6,7 @@ The example is a web component that allows you to add users and track their scor
 
 It was an enjoyable opportunity to practice Elm.
 
-To run, clone this repo, in the directory: 
+To run, clone this repo, and in the directory where cloned, run: 
 
 ```npm install``` 
 
