@@ -165,7 +165,11 @@ playMaker model playerId points =
         (Play playId playerId playerName points) :: model.plays
 
 
-nameUpdater : List { c | playerId : Int, name : String } -> Int -> String -> List { c | playerId : Int, name : String }
+nameUpdater :
+    List { c | playerId : Int, name : String }
+    -> Int
+    -> String
+    -> List { c | playerId : Int, name : String }
 nameUpdater ls playerId name =
     ls
         |> List.map
