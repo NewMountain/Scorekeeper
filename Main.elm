@@ -63,71 +63,131 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        -- On new input, update the text in input box
         Input name ->
             { model | name = name }
 
+        --On clicking the save button
         Save ->
             case (model.playerId) of
-                Just i ->
-                    { model
-                        | players =
-                            nameUpdater
-                                model.players
-                                i
-                                model.name
-                        , name = ""
-                        , playerId = Nothing
-                        , plays =
-                            nameUpdater
-                                model.plays
-                                i
-                                model.name
-                        , editMode = False
-                        , editPlayerId = 0
-                    }
+                -- If the user is being edited, IE already has a playerId
+                Just playerId ->
+                    model
+                        |> updatePlayerNames playerId
+                        |> updateNameInPlays playerId
+                        |> clearInputBox
+                        |> clearPlayerIndex
+                        |> deactivateEditMode
 
+                -- If the user is new, IE doesn't yet have a playerId
                 Nothing ->
-                    { model
-                        | players = addPlayer model
-                        , name = ""
-                        , playerId = Nothing
-                        , editMode = False
-                        , editPlayerId = 0
-                    }
+                    model
+                        |> addNewPlayer
+                        |> clearInputBox
+                        |> clearPlayerIndex
+                        |> deactivateEditMode
 
+        -- On clicking the cancel button
         Cancel ->
-            { model
-                | name = ""
-                , playerId = Nothing
-                , editMode = False
-                , editPlayerId = 0
-            }
+            model
+                |> clearInputBox
+                |> clearPlayerIndex
+                |> deactivateEditMode
 
+        -- When the edit mode is activated by "pencil button" click
         Edit player ->
-            { model
-                | name = player.name
-                , playerId = Just player.playerId
-                , editMode = True
-                , editPlayerId = player.playerId
-            }
+            model
+                |> putNameInInputBox player.name
+                |> createPlayerIndex player.playerId
+                |> activateEditMode player.playerId
 
-        Score playerId num ->
-            -- Find the player in the list and update it
-            { model
-                | players = pointUpdater model.players playerId num
-                , plays = (playMaker model playerId num)
-            }
+        -- When the two or three point buttons are clicked, update scores
+        Score playerId points ->
+            model
+                |> updatePlayerScore playerId points
+                |> appendPlays playerId points
 
         DeletePlay play ->
-            { model
-                | plays = playFilterer model.plays play
-                , players =
-                    pointUpdater
-                        model.players
-                        play.playerId
-                    <|
-                        (*) (-1) play.points
-            }
+            model
+                |> removePlay play
+                |> updatePlayerScore
+                    play.playerId
+                    (negate play.points)
+
+
+removePlay : Play -> Model -> Model
+removePlay play model =
+    { model | plays = playFilterer model.plays play }
+
+
+updatePlayerScore : Int -> Int -> Model -> Model
+updatePlayerScore playerId points model =
+    { model | players = pointUpdater model.players playerId points }
+
+
+appendPlays : Int -> Int -> Model -> Model
+appendPlays playerId points model =
+    { model | plays = playMaker model playerId points }
+
+
+activateEditMode : Int -> Model -> Model
+activateEditMode playerId model =
+    { model | editMode = True, editPlayerId = playerId }
+
+
+createPlayerIndex : Int -> Model -> Model
+createPlayerIndex playerId model =
+    { model | playerId = Just playerId }
+
+
+putNameInInputBox : String -> Model -> Model
+putNameInInputBox name model =
+    { model | name = name }
+
+
+addNewPlayer : Model -> Model
+addNewPlayer model =
+    { model | players = addPlayer model }
+
+
+deactivateEditMode : Model -> Model
+deactivateEditMode model =
+    { model
+        | editMode = False
+        , editPlayerId = 0
+    }
+
+
+updateNameInPlays : Int -> Model -> Model
+updateNameInPlays playerId model =
+    { model
+        | plays =
+            nameUpdater
+                model.plays
+                playerId
+                model.name
+    }
+
+
+clearPlayerIndex : Model -> Model
+clearPlayerIndex model =
+    { model | playerId = Nothing }
+
+
+clearInputBox : Model -> Model
+clearInputBox model =
+    { model | name = "" }
+
+
+updatePlayerNames : Int -> Model -> Model
+updatePlayerNames playerId model =
+    { model
+        | players =
+            nameUpdater
+                model.players
+                playerId
+                model.name
+    }
 
 
 playFilterer : List Play -> Play -> List Play
