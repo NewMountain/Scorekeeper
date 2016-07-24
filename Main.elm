@@ -106,8 +106,22 @@ update msg model =
                 , plays = (playMaker model playerId num)
             }
 
-        _ ->
-            model
+        DeletePlay play ->
+            { model
+                | plays = playFilterer model.plays play
+                , players =
+                    pointUpdater
+                        model.players
+                        play.playerId
+                    <|
+                        (*) (-1) play.points
+            }
+
+
+playFilterer : List Play -> Play -> List Play
+playFilterer playList play =
+    playList
+        |> List.filter (\p -> p.playId /= play.playId)
 
 
 playMaker : Model -> Int -> Int -> List Play
@@ -115,7 +129,7 @@ playMaker model playerId points =
     let
         playId =
             model.plays
-                |> List.map .playerId
+                |> List.map .playId
                 |> List.maximum
                 |> Maybe.withDefault 0
                 |> (+) 1
@@ -200,7 +214,6 @@ view model =
         , playerSection model
         , playerForm model
         , playSection model
-        , p [] [ text <| toString model ]
         ]
 
 
@@ -215,7 +228,7 @@ playSection model =
 playListHeader : Html Msg
 playListHeader =
     header []
-        [ div [] [ text "Plays" ]
+        [ div [] [ text "Last 10 Plays" ]
         , div [] [ text "Points" ]
         ]
 
@@ -224,6 +237,7 @@ playList : Model -> Html Msg
 playList model =
     model.plays
         |> List.map play
+        |> List.take 10
         |> ul []
 
 
