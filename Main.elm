@@ -158,7 +158,6 @@ playMaker model playerId points =
                                 ""
                     )
                 |> List.filter (\x -> x /= "")
-                |> Debug.log ""
                 |> List.head
                 |> Maybe.withDefault ""
     in
