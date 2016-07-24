@@ -16,6 +16,8 @@ type alias Model =
     , name : String
     , playerId : Maybe Int
     , plays : List Play
+    , editMode : Bool
+    , editPlayerId : Int
     }
 
 
@@ -40,6 +42,8 @@ initModel =
     , name = ""
     , playerId = Nothing
     , plays = []
+    , editMode = False
+    , editPlayerId = 0
     }
 
 
@@ -78,6 +82,8 @@ update msg model =
                                 model.plays
                                 i
                                 model.name
+                        , editMode = False
+                        , editPlayerId = 0
                     }
 
                 Nothing ->
@@ -85,18 +91,24 @@ update msg model =
                         | players = addPlayer model
                         , name = ""
                         , playerId = Nothing
+                        , editMode = False
+                        , editPlayerId = 0
                     }
 
         Cancel ->
             { model
                 | name = ""
                 , playerId = Nothing
+                , editMode = False
+                , editPlayerId = 0
             }
 
         Edit player ->
             { model
                 | name = player.name
                 , playerId = Just player.playerId
+                , editMode = True
+                , editPlayerId = player.playerId
             }
 
         Score playerId num ->
@@ -290,19 +302,29 @@ playerListModel : Model -> Html Msg
 playerListModel model =
     model.players
         |> List.sortBy .name
-        |> List.map domPlayerMaker
+        |> List.map (domPlayerMaker model)
         |> ul []
 
 
-domPlayerMaker : Player -> Html Msg
-domPlayerMaker player =
+domPlayerMaker : Model -> Player -> Html Msg
+domPlayerMaker model player =
     li []
         [ i
             [ class "edit"
             , onClick (Edit player)
             ]
             []
-        , div []
+        , div
+            [ if
+                model.editMode
+                    == True
+                    && model.editPlayerId
+                    == player.playerId
+              then
+                class "edit"
+              else
+                class ""
+            ]
             [ text player.name ]
         , pointButtonMaker 2 player
         , pointButtonMaker 3 player
@@ -328,6 +350,10 @@ playerForm model =
             , Html.Attributes.placeholder "Add/Edit Player..."
             , onInput Input
             , value model.name
+            , if model.editMode == True then
+                class "edit"
+              else
+                class ""
             ]
             []
         , button [ type' "submit" ] [ text "Save" ]
