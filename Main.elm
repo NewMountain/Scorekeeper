@@ -98,7 +98,7 @@ update msg model =
         Edit player ->
             model
                 |> putNameInInputBox player.name
-                |> createPlayerIndex player.playerId
+                |> setPlayerIndex player.playerId
                 |> activateEditMode player.playerId
 
         -- When the two or three point buttons are clicked, update scores
@@ -135,8 +135,8 @@ activateEditMode playerId model =
     { model | editMode = True, editPlayerId = playerId }
 
 
-createPlayerIndex : Int -> Model -> Model
-createPlayerIndex playerId model =
+setPlayerIndex : Int -> Model -> Model
+setPlayerIndex playerId model =
     { model | playerId = Just playerId }
 
 
@@ -371,29 +371,31 @@ playerListModel model =
 
 domPlayerMaker : Model -> Player -> Html Msg
 domPlayerMaker model player =
-    li []
-        [ i
-            [ class "edit"
-            , onClick (Edit player)
-            ]
-            []
-        , div
-            [ if
+    let
+        editChecker =
+            if
                 model.editMode
                     == True
                     && model.editPlayerId
                     == player.playerId
-              then
+            then
                 class "edit"
-              else
+            else
                 class ""
+    in
+        li []
+            [ i
+                [ class "edit"
+                , onClick (Edit player)
+                ]
+                []
+            , div [ editChecker ]
+                [ text player.name ]
+            , pointButtonMaker 2 player
+            , pointButtonMaker 3 player
+            , div []
+                [ text <| toString player.points ]
             ]
-            [ text player.name ]
-        , pointButtonMaker 2 player
-        , pointButtonMaker 3 player
-        , div []
-            [ text <| toString player.points ]
-        ]
 
 
 pointButtonMaker : Int -> Player -> Html Msg
